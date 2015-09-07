@@ -9,7 +9,8 @@ var {
 } = React;
 var Camera = require('react-native-camera');
 
-var CryptoJS = require("crypto-js");
+var CryptoJS = require('crypto-js');
+var scjl = require('scjl');
 var RNFS = require('react-native-fs');
 
 var cameraApp = React.createClass({
@@ -97,7 +98,8 @@ var cameraApp = React.createClass({
         console.log('end read', (Date.now() - timer) / 1000);
         timer = Date.now();
         console.log('start encrypt');
-        cipherString = CryptoJS.AES.encrypt(content, key, cfg);
+        // cipherString = CryptoJS.AES.encrypt(content, key, cfg);
+        cipherString = scjl.encrypt(key, content);
         console.log('end encrypt', (Date.now() - timer) / 1000);
         timer = Date.now();
         console.log('start write');
@@ -115,11 +117,13 @@ var cameraApp = React.createClass({
           console.log('end read', (Date.now() - timer) / 1000);
           timer = Date.now();
           console.log('start dencrypt');
-          var plainString = CryptoJS.AES.decrypt(cipherString.toString(), key, cfg);
+          // var plainString = CryptoJS.AES.decrypt(cipherString.toString(), key, cfg);
+          var plainString = scjl.decrypt(key, cipherString);
           console.log('end dencrypt', (Date.now() - timer) / 1000);
           timer = Date.now();
           console.log('start write');
-          return RNFS.writeFile(decrypt, plainString.toString(CryptoJS.enc.Utf8));
+          // return RNFS.writeFile(decrypt, plainString.toString(CryptoJS.enc.Utf8));
+          return RNFS.writeFile(decrypt, plainString);
 
         }).then((success) => {
           this.setState({capturedImageUri: decrypt});
