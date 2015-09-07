@@ -21,7 +21,7 @@ var cameraApp = React.createClass({
   },
 
   componentDidMount() {
-    RNFS.readDir('/', RNFS.DocumentDirectory)
+    /*RNFS.readDir('/', RNFS.DocumentDirectory)
       .then((result) => {
         console.log('GOT RESULT', result);
 
@@ -31,6 +31,7 @@ var cameraApp = React.createClass({
       .catch((err) => {
         console.log(err.message, err.code);
       });
+      */
   },
 
   render() {
@@ -79,15 +80,65 @@ var cameraApp = React.createClass({
   },
   _takePicture() {
     this.refs.cam.capture((err, data) => {
-      console.log(data);
-      this.setState({capturedImageUri: data});
-
-      // var key = '12345';
-      // var cfg = {};
-      // var cipherString = CryptoJS.AES.encrypt(data, key, cfg);
-      // var plainString  = CryptoJS.AES.decrypt(cipherString.toString(), key, cfg);
-      // // console.log(plainString.toString(CryptoJS.enc.Utf8));
       // console.log(data);
+      // this.setState({capturedImageUri: data});
+
+      var encrypt = RNFS.DocumentDirectoryPath + '/encrypt.jpg';
+      var decrypt = RNFS.DocumentDirectoryPath + '/decrypt.jpg';
+      var key = '12345';
+      var cfg = {};
+      var cipherString = null
+
+      var start = timer = Date.now();
+      console.log('start read');
+
+      RNFS.readFile(data).then((content) => {
+
+        console.log('end read', (Date.now() - timer) / 1000);
+        timer = Date.now();
+        console.log('start encrypt');
+        cipherString = CryptoJS.AES.encrypt(content, key, cfg);
+        console.log('end encrypt', (Date.now() - timer) / 1000);
+        timer = Date.now();
+        console.log('start write');
+        return RNFS.writeFile(encrypt, cipherString.toString());
+
+      }).then((success) => {
+
+        this.setState({capturedImageUri: encrypt});
+        console.log('end write', (Date.now() - timer) / 1000);
+
+        timer = Date.now();
+        console.log('start read');
+        RNFS.readFile(encrypt).then((content) => {
+
+          console.log('end read', (Date.now() - timer) / 1000);
+          timer = Date.now();
+          console.log('start dencrypt');
+          var plainString = CryptoJS.AES.decrypt(cipherString.toString(), key, cfg);
+          console.log('end dencrypt', (Date.now() - timer) / 1000);
+          timer = Date.now();
+          console.log('start write');
+          return RNFS.writeFile(decrypt, plainString.toString(CryptoJS.enc.Utf8));
+
+        }).then((success) => {
+          this.setState({capturedImageUri: decrypt});
+          console.log('end write', (Date.now() - start) / 1000);
+        }).catch((err) => {
+          console.log(err.message);
+        });
+
+      }).catch((err) => {
+        console.log(err.message);
+      });
+
+      /*var key = '12345';
+      var cfg = {};
+      var cipherString = CryptoJS.AES.encrypt('johan ardlin', key, cfg);
+      var plainString  = CryptoJS.AES.decrypt(cipherString.toString(), key, cfg);
+      console.log(plainString.toString(CryptoJS.enc.Utf8));
+      console.log(cipherString.toString());
+      */
       // this.setState({capturedImage: plainString.toString(CryptoJS.enc.Utf8)});
     });
   }
